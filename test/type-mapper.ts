@@ -604,8 +604,8 @@ test('type-mapper: imports for serde packages used ', (t) => {
     const imports = tm.importsUsed(SOME_FILE_DIR)
     spok(t, imports, [
       `import * as web3 from '@solana/web3.js';`,
-      `import * as beet from '@metaplex-foundation/beet';`,
-      `import * as beetSolana from '@metaplex-foundation/beet-solana';`,
+      `import * as beet from '@convergence-rfq/beet';`,
+      `import * as beetSolana from '@convergence-rfq/beet-solana';`,
     ])
   }
 
@@ -618,7 +618,7 @@ test('type-mapper: imports for serde packages used ', (t) => {
       tm.serdePackagesUsed.add(pack)
     }
     const imports = tm.importsUsed(SOME_FILE_DIR)
-    spok(t, imports, [`import * as beet from '@metaplex-foundation/beet';`])
+    spok(t, imports, [`import * as beet from '@convergence-rfq/beet';`])
   }
   t.end()
 })

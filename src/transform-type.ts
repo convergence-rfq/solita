@@ -2,7 +2,7 @@ import {
   BeetTypeMapKey,
   numbersTypeMap,
   NumbersTypeMapKey,
-} from '@metaplex-foundation/beet'
+} from '@convergence-rfq/beet'
 import {
   IdlFieldsType,
   IdlDefinedTypeDefinition,

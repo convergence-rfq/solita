@@ -8,11 +8,11 @@ import {
   numbersTypeMap,
   NumbersTypeMapKey,
   SupportedTypeDefinition,
-} from '@metaplex-foundation/beet'
+} from '@convergence-rfq/beet'
 import {
   BeetSolanaExports,
   BeetSolanaTypeMapKey,
-} from '@metaplex-foundation/beet-solana'
+} from '@convergence-rfq/beet-solana'
 import { SerdePackage } from './serdes'
 import { strict as assert } from 'assert'
 
@@ -407,7 +407,7 @@ export const BIGNUM = [
   'i256',
   'i512',
 ] as const
-export type Bignum = typeof BIGNUM[number]
+export type Bignum = (typeof BIGNUM)[number]
 export function isNumberLikeType(ty: IdlType): ty is NumbersTypeMapKey {
   return (
     typeof ty === 'string' && numbersTypeMap[ty as NumbersTypeMapKey] != null
@@ -420,8 +420,8 @@ export function isPrimitiveType(ty: IdlType): ty is PrimitiveType {
 // -----------------
 // Packages
 // -----------------
-export const BEET_PACKAGE = '@metaplex-foundation/beet'
-export const BEET_SOLANA_PACKAGE = '@metaplex-foundation/beet-solana'
+export const BEET_PACKAGE = '@convergence-rfq/beet'
+export const BEET_SOLANA_PACKAGE = '@convergence-rfq/beet-solana'
 export const SOLANA_WEB3_PACKAGE = '@solana/web3.js'
 export const SOLANA_SPL_TOKEN_PACKAGE = '@solana/spl-token'
 export const BEET_EXPORT_NAME = 'beet'

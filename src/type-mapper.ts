@@ -32,11 +32,11 @@ import {
   BEET_PACKAGE,
   SupportedTypeDefinition,
   supportedTypeMap as beetSupportedTypeMap,
-} from '@metaplex-foundation/beet'
+} from '@convergence-rfq/beet'
 import {
   BeetSolanaTypeMapKey,
   supportedTypeMap as beetSolanaSupportedTypeMap,
-} from '@metaplex-foundation/beet-solana'
+} from '@convergence-rfq/beet-solana'
 import {
   assertKnownSerdePackage,
   SerdePackage,
