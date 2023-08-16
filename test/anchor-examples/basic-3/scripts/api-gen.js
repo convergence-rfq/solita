@@ -5,10 +5,6 @@ const path = require('path')
 const { spawn } = require('child_process')
 const { Solita } = require('../../../../dist/src/solita')
 const { writeFile } = require('fs/promises')
-const {
-  rustbinMatch,
-  confirmAutoMessageConsole,
-} = require('@metaplex-foundation/rustbin')
 const cargoToml = path.join(__dirname, '..', 'programs', 'puppet', 'Cargo.toml')
 
 const generatedIdlDir = path.join(__dirname, '..', 'idl')
@@ -23,11 +19,7 @@ const rustbinConfig = {
 }
 
 async function main() {
-  const { fullPathToBinary: anchorExecutable } = await rustbinMatch(
-    rustbinConfig,
-    confirmAutoMessageConsole
-  )
-  const anchor = spawn(anchorExecutable, ['build', '--idl', generatedIdlDir])
+  const anchor = spawn('anchor', ['build', '--idl', generatedIdlDir])
     .on('error', (err) => {
       console.error(err)
       // @ts-ignore this err does have a code

@@ -1,6 +1,6 @@
 {
   "name": "@convergence-rfq/solita",
-  "version": "0.15.9",
+  "version": "0.16.0",
   "description": "Generates SDK API from solana contract IDL.",
   "main": "dist/src/solita.js",
   "types": "dist/src/solita.d.ts",
@@ -61,7 +61,7 @@
   },
   "devDependencies": {
     "@metaplex-foundation/amman": "^0.6.1",
-    "@project-serum/anchor": "^0.19.1-beta.1",
+    "@coral-xyz/anchor": "^0.28.0",
     "@types/debug": "^4.1.7",
     "@types/eslint": "^8.2.2",
     "@types/node": "^16.11.12",

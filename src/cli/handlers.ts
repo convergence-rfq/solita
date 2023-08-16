@@ -1,8 +1,8 @@
 import {
-  rustbinMatch,
   RustbinConfig,
   RustbinMatchReturn,
   ConfirmInstallArgs,
+  rustbinMatch,
 } from '@metaplex-foundation/rustbin'
 import { spawn, SpawnOptionsWithoutStdio } from 'child_process'
 import { SolitaConfig, SolitaConfigAnchor, SolitaConfigShank } from './types'
@@ -11,34 +11,122 @@ import { enhanceIdl } from './enhance-idl'
 import { generateTypeScriptSDK } from './gen-typescript'
 import { logError, logInfo } from '../utils'
 import { Options as PrettierOptions } from 'prettier'
+import { parse } from 'toml'
+import { promises as fs } from 'fs'
 
-export function handleAnchor(
+export async function handleAnchor(
   config: SolitaConfigAnchor,
   prettierConfig?: PrettierOptions
 ) {
-  const { idlDir, binaryInstallDir, programDir } = config
+  const { idlDir, programDir, programName, sdkDir, anchorRemainingAccounts } =
+    config
   const spawnArgs = ['build', '--idl', idlDir]
   const spawnOpts: SpawnOptionsWithoutStdio = {
     cwd: programDir,
   }
-  const rustbinConfig: RustbinConfig = {
-    rootDir: binaryInstallDir,
-    binaryName: 'anchor',
-    binaryCrateName: 'anchor-cli',
-    libName: 'anchor-lang',
-    cargoToml: path.join(programDir, 'Cargo.toml'),
-    dryRun: false,
-    ...config.rustbin,
+
+  const cargoToml = path.join(programDir, 'Cargo.toml')
+  const anchorCliVersion = await getAnchorCommandVersion()
+  const cargoAnchorVersion = await getAnchorVersionInToml(cargoToml)
+
+  if (anchorCliVersion !== cargoAnchorVersion) {
+    throw Error(
+      `Anchor version mismatch! Selected anchor cli: ${anchorCliVersion}, in Cargo.toml: ${cargoAnchorVersion}`
+    )
   }
 
-  return handle(
-    config,
-    rustbinConfig,
-    spawnArgs,
-    spawnOpts,
-    prettierConfig,
-    config.anchorRemainingAccounts
-  )
+  return new Promise<void>((resolve, reject) => {
+    const idlGenerator = spawn('anchor', spawnArgs, spawnOpts)
+      .on('error', (err) => {
+        logError(`${programName} idl generation failed`)
+        reject(err)
+      })
+      .on('exit', async () => {
+        logInfo('IDL written to: %s', path.join(idlDir, `${programName}.json`))
+        const idl = await enhanceIdl(
+          config,
+          anchorCliVersion,
+          cargoAnchorVersion
+        )
+        await generateTypeScriptSDK(
+          idl,
+          sdkDir,
+          prettierConfig,
+          config.typeAliases,
+          config.serializers,
+          anchorRemainingAccounts
+        )
+        resolve()
+      })
+
+    idlGenerator.stdout.on('data', (buf) => process.stdout.write(buf))
+    idlGenerator.stderr.on('data', (buf) => process.stderr.write(buf))
+  })
+}
+
+async function getAnchorCommandVersion(): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const child = spawn('anchor', ['--version'], { stdio: 'pipe' })
+
+    let stdoutData = ''
+
+    child.stdout.on('data', (data) => {
+      stdoutData += data.toString()
+    })
+
+    child.on('error', (error) => {
+      if (error.name === 'Error' && error.message.includes('ENOENT')) {
+        reject('Anchor is not installed!')
+        return
+      }
+
+      reject(error)
+    })
+
+    child.on('close', (code) => {
+      if (code === 0) {
+        const re = /anchor-cli (\d+\.\d+\.\d+)/
+        const match = stdoutData.match(re)
+        if (match === null) {
+          reject('Anchor version matching failed')
+        } else {
+          resolve(match[1])
+        }
+      } else {
+        reject(new Error(`Process exited with code ${code}`))
+      }
+    })
+  })
+}
+
+async function getAnchorVersionInToml(cargoToml: string) {
+  const { parsed } = await parseCargoToml(cargoToml)
+  const libVersion = parsed.dependencies['anchor-lang']
+  if (libVersion == null) {
+    throw new Error(`anchor_lang not found as dependency in ${cargoToml}`)
+  }
+  return typeof libVersion === 'string' ? libVersion : libVersion.version
+}
+
+export type CargoToml = {
+  dependencies: Record<string, string | { version: string }>
+}
+
+export async function parseCargoToml(fullPath: string) {
+  let toml
+  try {
+    toml = await fs.readFile(fullPath, 'utf8')
+  } catch (err) {
+    logError('Failed to read Cargo.toml at "%s"\n', fullPath, err)
+    throw err
+  }
+  try {
+    const parsed: CargoToml = parse(toml)
+    return { parsed, toml }
+  } catch (err) {
+    logError('Failed to parse Cargo.toml:\n%s\n%s', toml, err)
+    throw err
+  }
 }
 
 export function handleShank(
